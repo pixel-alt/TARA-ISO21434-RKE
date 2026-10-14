@@ -1,7 +1,8 @@
 # 01 – Item Definition
 
-**Scope:** system-level TARA
-**Status:** fictional case study – generic passenger vehicle, no real OEM
+- **Scope:** system-level TARA
+- **Status:** fictional case study – generic passenger vehicle, no real OEM
+
 
 ## 1. Item description
 
@@ -20,10 +21,10 @@ and commands the door lock actuators.
 │            [C-02 RF receiver]    │
 │                  │ I-02 LIN      │
 │         [C-03 BCM – RKE logic]───┼── I-04 Body CAN ──[EXT-01 Central gateway]
-│                  │ I-03 wired    │
-│      [C-04 Door/trunk actuators] │
-└──────────────────────────────────┘
-                                                                   │ I-05 Diagnostic CAN
+│                  │ I-03 wired    │                               │
+│      [C-04 Door/trunk actuators] │                               │
+└──────────────────────────────────┘                               │
+                                                           I-05 Diagnostic CAN
                                                            [EXT-02 OBD port]
 ```
 
