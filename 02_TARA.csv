@@ -1,0 +1,13 @@
+asset_id,item_ref,asset,cybersecurity_property,ds_id,damage_scenario,impact_category,threat_scenario,attack_path,attack_feasibility,risk_value,risk_treatment
+AS-01,"C-01, I-06a","Key secret K (key fob, single key)",C,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-02,"C-03, I-06b","Key secrets stored in the BCM (all paired keys)",C,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-03,"C-01, I-01","Rolling-code counter (key fob)",I,DS-02,"Owner can no longer lock or unlock the vehicle with the key fob; vehicle inaccessible or left unlocked",O|F,,,,,
+AS-04,"C-03, F-05, I-06b","Stored rolling-code counter (BCM)",I,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-04,"C-03, F-05, I-06b","Stored rolling-code counter (BCM)",I,DS-02,"Owner can no longer lock or unlock the vehicle with the key fob; vehicle inaccessible or left unlocked",O|F,,,,,
+AS-05,"C-03, F-03 / F-04 / F-06, I-04","Paired-key list",I,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-05,"C-03, F-03 / F-04 / F-06, I-04","Paired-key list",I,DS-02,"Owner can no longer lock or unlock the vehicle with the key fob; vehicle inaccessible or left unlocked",O|F,,,,,
+AS-06,"C-03, F-01 / F-02","Lock/unlock and trunk release function",I,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-06,"C-03, F-01 / F-02","Lock/unlock and trunk release function",A,DS-02,"Owner can no longer lock or unlock the vehicle with the key fob; vehicle inaccessible or left unlocked",O|F,,,,,
+AS-07,"I-03 → C-04","Actuator command",I,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-08,"C-01, C-03, I-06a / I-06b","Firmware (key fob and BCM)",I,DS-01,"Parked vehicle opened (doors or trunk) by an unauthorized person; vehicle contents may be stolen (engine start remains blocked by the immobilizer, out of scope)",F,,,,,
+AS-09,"I-01","Key ID",C,DS-03,"Owner's key fob is recognizable at each use; travel habits and absences can be inferred",P,,,,,
