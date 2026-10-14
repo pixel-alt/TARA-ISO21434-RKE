@@ -2,7 +2,6 @@
 
 **Scope:** system-level TARA
 **Status:** fictional case study – generic passenger vehicle, no real OEM
-**Version:** 0.1 · **Date:** 2026-10-14
 
 ## 1. Item description
 
