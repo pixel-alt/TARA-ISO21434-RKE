@@ -1,0 +1,4 @@
+risk_id,threat_scenario,risk_value,risk_treatment,cs_goal,goal_statement,requirement_id,requirement_level,requirement,verification_method,verification_status
+TS-01,RollJam (jam + capture + replay),High,Reduce,CSG-01,BCM shall not unlock on a replayed authentication code,CSR-SYS-01,System,Reject an authentication code already accepted (replayed),Test (replay on bench),Planned
+TS-01,RollJam (jam + capture + replay),High,Reduce,CSG-01,BCM shall not unlock on a replayed authentication code,CSR-SW-01,Software,Verify received counter strictly greater than stored counter before executing; update stored counter only after code verified,Test (replay on bench),Planned
+TS-01,RollJam (jam + capture + replay),High,Reduce,CSG-01,BCM shall not unlock on a replayed authentication code,CSR-HW-01,Hardware,"Hold counter in non-volatile memory, protected against external modification (TS-10)",Review + test,Planned
