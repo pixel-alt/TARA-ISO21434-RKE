@@ -66,9 +66,6 @@ asset → cybersecurity property (C/I/A) → damage scenario → impact (4 axes,
 
 ## Limits
 
-Fictional target . Not a conformity assessment.
-Ratings use conventions documented in `02_tara-method.md` (e.g. impact
-aggregation by maximum) that a real programme would agree with stakeholders.
-Several scenarios rely on explicitly stated assumptions (A-05 for RollJam,
-A-06 for tracking, A-07 for the firmware path); if those do not hold, the
-corresponding lines must be reassessed.
+Fictional target and not a conformity assessment.··
+Ratings use conventions documented in `02_tara-method.md` (e.g. impact aggregation by maximum) that a real programme would agree with stakeholders. ··
+Several scenarios rely on explicitly stated assumptions (A-05 for RollJam, A-06 for tracking, A-07 for the firmware path); if those do not hold, thecorresponding lines must be reassessed.
