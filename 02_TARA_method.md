@@ -28,9 +28,9 @@ Impact is rated on the four ISO/SAE 21434 axes (Safety, Financial, Operational, 
 | ds_id | Damage scenario | S | F | O | P | Retained | Rationale per axis |
 |---|---|---|---|---|---|---|---|
 | DS-01 | Parked vehicle actively opened (doors or trunk) by an unauthorized person; contents may be stolen (engine start blocked by the immobilizer, out of scope) | Neg | Major | Neg | Mod | **Major** | F: worst credible case — a valuable item (laptop, bag) is stolen = significant loss; the vehicle itself cannot be driven away (immobilizer). P: a document in the cabin (registration → home address) may be read once = one-off disclosure, not durable profiling; and this harm stems from the contents left in the vehicle, not from the RKE function itself. S/O not affected. |
-| DS-02 | Owner can no longer lock or unlock the vehicle with the key fob | Neg | Mod | Mod | Neg | **Moderate** | O: a mechanical key exists (01, §4) → mechanical fallback available, so Moderate, not "locked out until workshop" (Major). The mechanical key covers access; engine start remains blocked by the immobilizer (out of scope). F: key reprogramming / workshop cost = limited loss. No data exposed (P Neg) — this is what distinguishes DS-02 from DS-01. |
-| DS-03 | Owner's key fob is recognizable at each use; repeated eavesdropping lets an observer infer presence, absence and travel habits (GDPR: persistent identifier) | Neg | Neg | Neg | Major | **Major** | P: repeated eavesdropping of the persistent Key ID (A-06) lets a determined observer infer habits. **Major and not Severe**: the radio range (~10–50 m, 01 §5) limits tracking to a local observer (home, workplace), with no large-scale persistent tracking. The P is legitimately high because the clear-text Key ID is an emission of the RKE function (asset AS-07). |
-| DS-04 | Vehicle left unlocked without the owner's knowledge: the owner believes the vehicle is secured while it remains accessible with no defeat of the electronic lock; contents may then be stolen | Neg | Major | Neg | Mod | **Major** | S: Negligible — the earlier rating (assault during sleep) is dropped, as ISO 21434 rates Safety via vehicle behaviour (ISO 26262 link), not via a downstream third-party crime. F: theft of contents, same worst credible case as DS-01 (the same damage cannot be rated differently). O: the vehicle functions normally. P: same logic as DS-01. |
+| DS-02 | Owner can no longer lock or unlock the vehicle with the key fob | Neg | Mod | Mod | Neg | **Moderate** | O: a mechanical key exists (`01`, A-08) → mechanical fallback available, so Moderate, not "locked out until workshop" (Major). The mechanical key covers access; engine start remains blocked by the immobilizer (out of scope). F: key reprogramming / workshop cost = limited loss. No data exposed (P Neg) — this is what distinguishes DS-02 from DS-01. |
+| DS-03 | Owner's key fob is recognizable at each use; repeated eavesdropping lets an observer infer presence, absence and travel habits (GDPR: persistent identifier) | Neg | Neg | Neg | Major | **Major** | P: repeated eavesdropping of the persistent Key ID (A-06) lets a determined observer infer habits. **Major and not Severe**: the radio range (~10–50 m, `01` §5) limits tracking to a local observer (home, workplace), with no large-scale persistent tracking. The P is legitimately high because the clear-text Key ID is an emission of the RKE function (asset AS-07). |
+| DS-04 | Vehicle left unlocked without the owner's knowledge: the owner believes the vehicle is secured while it remains accessible with no defeat of the electronic lock; contents may then be stolen | Neg | Major | Neg | Mod | **Major** | S: Negligible — ISO 21434 rates Safety via vehicle behaviour (ISO 26262 link), not via a downstream third-party crime. F: theft of contents, same worst credible case as DS-01 (the same damage cannot be rated differently). O: the vehicle functions normally. P: same logic as DS-01. |
 
 **DS-01 vs DS-04:** the difference is the state of the vehicle, which changes the consequence for the owner, not merely the attack path. In DS-01 the vehicle was locked and its security was defeated; in DS-04 the vehicle was never locked and no defeat of the electronic lock took place — the attacker exploits a door left unlocked, and the owner is unaware the vehicle is unsecured. The two also call for different treatments (anti-replay / anti-pairing control for DS-01; lock-confirmation feedback, out of boundary, for DS-04), which is why they are kept separate even though both reach a retained impact of Major.
 
@@ -57,11 +57,11 @@ Feasibility follows the ISO/SAE 21434 attack-potential approach: the harder the 
 
 | Level | Meaning | Typical marker in this study |
 |---|---|---|
-| High | Low effort, common equipment, no prior physical breach | Radio capture/replay from range (TS-01), key ID eavesdropping (TS-12) |
-| Medium | Moderate effort or limited physical access | Exterior harness connector (TS-04, TS-06); OBD access inside the cabin (TS-03, TS-05) |
-| Low | Specialist effort, invasive physical access | Opening the BCM and soldering onto the debug interface (TS-08 to TS-11) |
+| High | Low effort, common equipment, no prior physical breach | Radio capture/replay from range, key ID eavesdropping |
+| Medium | Moderate effort or limited physical access | Exterior harness connector; OBD access inside the cabin |
+| Low | Specialist effort, invasive physical access | Opening the BCM and soldering onto the debug interface |
 
-This ordering is the reason the debug-access lines (TS-08 to TS-11) must not receive the same feasibility as the harness lines (TS-04, TS-06): they demand opening the BCM, where the harness path only needs an exterior connector.
+This ordering is the reason the debug-access lines must not receive the same feasibility as the harness lines: they demand opening the BCM, where the harness path only needs an exterior connector.
 
 ## 5. Risk matrix
 
@@ -76,23 +76,25 @@ Risk = f(impact, feasibility). Feasibility stands for likelihood: the harder the
 
 Note: Major × Low = Low (not Medium) because a Low-feasibility attack is improbable; a Major impact that is improbable remains a low risk. The matrix is monotone (risk never decreases when impact or feasibility rises).
 
+*Revision (see CHANGELOG): Major × Low changed from Medium to Low; the change restores discrimination between Medium-feasibility (CAN) and Low-feasibility (debug) lines.*
+
 ## 6. Justified exclusions
 
 Excluding an attack is defensible only when the reason is stated. An omitted threat looks ignored; an excluded one looks decided.
 
 | Excluded element | Reason |
 |---|---|
-| I-02 (LIN, receiver → BCM) | Excluded from this v0.1. The analysis prioritises the external RF attack surface and the diagnostic CAN paths. Injection on the internal LIN interface is not assessed separately in this version; its distinct attack potential, and exactly where the BCM performs frame validation relative to the LIN, would require further investigation. |
+| I-02 (LIN, receiver → BCM) | Excluded in this version. The analysis prioritises the external RF attack surface and the diagnostic CAN paths. Injection on the internal LIN interface is not assessed separately; its distinct attack potential, and exactly where the BCM performs frame validation relative to the LIN, would require further investigation. |
 | Actuator command (I-03) | Power output, not a message. Driving the actuator directly is mechanical break-in, outside the cyber perimeter; no cybersecurity control applies. |
 | Key-fob counter modification | Pointless: an attacker who holds the fob (I-06a) can already open the vehicle by pressing the button. |
-| Firmware confidentiality | No fleet-wide master key (see `01`, §1): a firmware dump reveals no secret usable against other vehicles. Security rests on the key, not on the secrecy of the algorithm (Kerckhoffs). Firmware integrity is retained (AS-06 / TS-11). |
+| Firmware confidentiality | No fleet-wide master key (see `01`, §1): a firmware dump reveals no secret usable against other vehicles. Security rests on the key, not on the secrecy of the algorithm (Kerckhoffs). Firmware integrity is retained (AS-06). |
 
 ## 7. Limits (analysed or bounded, not excluded)
 
 These are not exclusions: the threat is real and kept in scope, but the point worth stating is where its treatment lies or why the analysis stops at the RKE boundary.
 
-- **Denial jamming of I-01.** Jamming the lock command so the BCM receives no frame cannot be prevented by any RKE cybersecurity control — the attack removes the channel rather than forging a message (RED / UN R10 territory, not ISO 21434). It is kept in scope through its consequence DS-04 (TS-02); its only mitigation, lock-confirmation feedback, is out of boundary. This is distinct from RollJam capture-jamming (TS-01), where the replayed frame *is* processed and the control is cryptographic (counter + window).
-- **CAN-wide denial (e.g. bus-off attack).** Forcing the body CAN into a bus-off error state would deny communication on the whole bus. This is a distinct mechanism from radio jamming, not a transposition of it. It is not assessed in this v0.1 because it targets the network as a whole, not the RKE function specifically; it would belong to a vehicle-network-level analysis.
+- **Denial jamming of I-01.** Jamming the lock command so the BCM receives no frame cannot be prevented by any RKE cybersecurity control — the attack removes the channel rather than forging a message (RED / UN R10 territory, not ISO 21434). It is kept in scope through its consequence DS-04; its only mitigation, lock-confirmation feedback, is out of boundary. This is distinct from RollJam capture-jamming, where the replayed frame *is* processed and the control is cryptographic (counter + window).
+- **CAN-wide denial (e.g. bus-off attack).** Forcing the body CAN into a bus-off error state would deny communication on the whole bus. This is a distinct mechanism from radio jamming, not a transposition of it. It is not assessed in this version because it targets the network as a whole, not the RKE function specifically; it would belong to a vehicle-network-level analysis.
 
 ## 8. Traceability chain
 

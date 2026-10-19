@@ -1,26 +1,10 @@
 # Changelog
 
-## [v0.1] – 2026-10-18
-
-Initial public release.
-
-### Added
-- Item definition: boundary, interfaces, functions, assumptions (A-01 to A-07)
-- 12 threat scenarios across radio, diagnostic/CAN and physical-debug surfaces
-- Impact rated on 4 axes (S/F/O/P) for the 4 damage scenarios
-- One risk chain fully worked end-to-end: TS-01 (RollJam) → CSG-01 → CSR-SYS/SW/HW
-- Traceability matrix (TS-01 chain)
-
-### Planned (v0.2)
-- Feasibility and risk rating for the 11 remaining threat scenarios
-- Risk treatment decisions, EBIOS RM view
-
-## [v0.2] — en cours
+## [Unreleased]
 
 ### Changed
-- Damage scenarios re-rated on the 4 axes at worst-credible-case; retained
-  impacts: DS-01 Major, DS-02 Moderate (mechanical key fallback), DS-03 Major,
-  DS-04 Major.
+- Damage scenarios re-rated on the 4 axes (S/F/O/P) at worst-credible-case.
+  Retained impacts: DS-01 Major, DS-02 Moderate, DS-03 Major, DS-04 Major.
 - Risk matrix: Major × Low changed from Medium to Low. Rationale: a
   low-feasibility attack is improbable; a Major impact that is improbable is a
   low risk. Restores discrimination between Medium-feasibility (CAN) and
@@ -28,3 +12,17 @@ Initial public release.
 
 ### Added
 - A-08: mechanical key backup (supports DS-02 = Moderate).
+- Convention line in 01: the item definition cites no TARA-produced identifier.
+
+### Fixed
+- DS-04 wording: "no intrusion" → "no defeat of the electronic lock".
+- DS-02 reference corrected to 01/A-08 (was 01/§4).
+- Removed TARA-produced identifiers from 01: threat-scenario IDs (§3) and
+  damage-scenario IDs (A-08 "Impact if false", GDPR constraint). Also removed
+  TS IDs from 02 (§4, §6, §7). The item definition no longer references TARA
+  outputs (no circular dependency).
+- Version-specific wording in 02 (§6, §7) changed from "v0.1" to "this version".
+
+## [0.1.0] — 2026-10-18
+- Initial public release: item definition, 12 threat scenarios, one full
+  replay chain (TS-01 → CSG-01 → CSR SYS/SW/HW), traceability matrix.g

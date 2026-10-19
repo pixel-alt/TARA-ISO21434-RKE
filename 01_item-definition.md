@@ -2,6 +2,7 @@
 
 **Scope:** system-level TARA
 **Status:** fictional case study – generic passenger vehicle, no real OEM
+**Convention:** the item definition (clause 9) cites no identifier produced by the TARA (threat scenarios, damage scenarios, cybersecurity goals). It may reference the TARA documents themselves (`02`, `03`), which are stable.
 
 ## 1. Item description
 
@@ -75,7 +76,7 @@ Functions reflect a representative RKE architecture. Diagnostic-based key manage
 | F-05 | Resynchronize the rolling-code counter: accepts a frame whose counter is ahead of the stored value within a bounded look-ahead window and updates the stored counter only after the authentication code is verified | Key fob (I-01) | User |
 | F-06 | Revoke a key | Diagnostic request (I-05 → I-04) | Workshop technician |
 
-The authentication and rolling-code checks protect radio-triggered actions. TS-01 (RollJam) explores whether a captured, authentic code can be accepted within the F-05 look-ahead window under assumption A-05. Debug-access scenarios (TS-09, TS-10) examine whether direct modification of BCM secrets or counter state can undermine the data these checks rely on, rather than breaking the checks themselves.
+The authentication and rolling-code checks protect radio-triggered actions, but only the frames they process: they verify a received code, not the integrity of the secrets and counters they rely on. A captured authentic code accepted within the F-05 look-ahead window (A-05), or a direct modification of the stored secrets or counter, can therefore defeat the function without breaking the checks themselves. These paths are analysed in the TARA (`02`).
 
 ### Interface coverage check
 
@@ -103,7 +104,7 @@ The authentication and rolling-code checks protect radio-triggered actions. TS-0
 | BCM software update / reprogramming via diagnostic | BCM-wide function, see A-04 |
 | Interior lock control (door switch, speed-based auto-lock) | Local wired command, not an RKE (radio) function |
 | Lock confirmation (indicators, mirror folding) | Executed by lighting / comfort functions |
-| Mechanical key | Non-electronic |
+| Attacks on the mechanical key | Non-electronic; no cyber attack surface. Its existence as an access fallback is assumed in A-08 |
 
 ## 5. Operational environment
 
@@ -122,12 +123,12 @@ The authentication and rolling-code checks protect radio-triggered actions. TS-0
 | A-02 | Key secrets are provisioned securely at production | Out of scope (backend / factory) | Secrets may be known before vehicle delivery |
 | A-03 | The OBD port is located in the cabin; physical access to the cabin is required to reach it | Typical vehicle layout | Diagnostic interface reachable from outside the vehicle |
 | A-04 | BCM reprogramming via diagnostic is protected. Physical access through the debug interface (I-06b) is not covered by this assumption and is analysed | Out of scope (BCM-wide) | RKE logic can be replaced through diagnostic |
-| A-05 | The look-ahead window of F-05 accepts a captured, not-yet-consumed code (enabling a RollJam-style capture-and-replay) | Typical rolling-code tolerance | Replay is ineffective; the radio path (TS-01) is closed |
-| A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking scenario (TS-12) must be reassessed |
-| A-07 | No effective firmware authenticity, integrity, or debug-access protection prevents a modified firmware from being installed and executed through I-06b | Explicit modelling assumption for this fictional case study | If any such protection is effective on this path, the modified firmware is rejected and TS-11 fails |
-| A-08 | A mechanical key backup equips the vehicle and provides a physical access fallback if the fob is unavailable | Typical vehicle equipment | DS-02 rises to Major (owner locked out until workshop) |
+| A-05 | The look-ahead window of F-05 accepts a captured, not-yet-consumed code (enabling a RollJam-style capture-and-replay) | Typical rolling-code tolerance | Replay is ineffective; the radio path is closed |
+| A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking analysis must be reassessed |
+| A-07 | No effective firmware authenticity, integrity, or debug-access protection prevents a modified firmware from being installed and executed through I-06b | Explicit modelling assumption for this fictional case study | If any such protection is effective on this path, the modified firmware is rejected and the firmware-flash analysis no longer holds |
+| A-08 | A mechanical key backup equips the vehicle and provides a physical access fallback if the fob is unavailable | Typical vehicle equipment | The owner is locked out until workshop intervention (higher operational impact) |
 
 ### Constraints
 
-- **Regulatory:** UN R155 (cybersecurity), Radio Equipment Directive 2014/53/EU (433 MHz emission), UN R10 (electromagnetic compatibility), GDPR (EU) 2016/679 (key ID broadcast in clear is a persistent identifier, see DS-03).
+- **Regulatory:** UN R155 (cybersecurity), Radio Equipment Directive 2014/53/EU (433 MHz emission), UN R10 (electromagnetic compatibility), GDPR (EU) 2016/679 (key ID broadcast in clear is a persistent identifier).
 - **Technical:** battery-powered key fob (low power, lightweight cryptography), one-way radio link (key fob cannot receive).
