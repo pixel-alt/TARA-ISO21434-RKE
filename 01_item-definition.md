@@ -125,6 +125,7 @@ The authentication and rolling-code checks protect radio-triggered actions. TS-0
 | A-05 | The look-ahead window of F-05 accepts a captured, not-yet-consumed code (enabling a RollJam-style capture-and-replay) | Typical rolling-code tolerance | Replay is ineffective; the radio path (TS-01) is closed |
 | A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking scenario (TS-12) must be reassessed |
 | A-07 | No effective firmware authenticity, integrity, or debug-access protection prevents a modified firmware from being installed and executed through I-06b | Explicit modelling assumption for this fictional case study | If any such protection is effective on this path, the modified firmware is rejected and TS-11 fails |
+| A-08 | A mechanical key backup equips the vehicle and provides a physical access fallback if the fob is unavailable | Typical vehicle equipment | DS-02 rises to Major (owner locked out until workshop) |
 
 ### Constraints
 
