@@ -3,7 +3,7 @@
 **Scope:** cybersecurity goals and requirements derived from `02_tara.csv`
 **Status:** fictional case study – generic passenger vehicle, no real OEM
 
-**Coverage.** TS-01 is treated by *Reduce* with two goals: CSG-01, which refines a control the item already provides, and CSG-04, which introduces the one it does not; RES-01 carries what neither closes. TS-03 is treated by *Reduce* with CSG-02 (preventive, authorization) and CSG-03 (detective, accountability). TS-02 is treated by *Retain* and recorded under "Risk retention" (ACC-01). CSG-02 will also cover TS-04, TS-05 and TS-06 once they are rated. The remaining lines get their treatment in a later version (see `OPEN-POINTS.md`).
+**Coverage.** TS-01 is treated by *Reduce* with two goals: CSG-01, which refines a control the item already provides, and CSG-04, which introduces the one it does not; RES-01 carries what neither closes. TS-03, TS-04, TS-05 and TS-06 — the whole key-management family — are treated by *Reduce* with CSG-02 (preventive, authorization) and CSG-03 (detective, accountability); they differ only in the service (pairing F-03 or revocation F-06) and the arrival path (OBD or exterior harness). TS-02 is treated by *Retain* and recorded under "Risk retention" (ACC-01). The remaining lines get their treatment in a later version (see `OPEN-POINTS.md`).
 
 A cybersecurity **goal** states *what* must be prevented (the effect), not *how*. The **concept** names the control and where it sits. The **requirements** (CSR) make the concept testable, allocated to system (SYS), software (SW) and hardware (HW). Requirement identifiers carry the number of the goal they belong to.
 
@@ -87,17 +87,17 @@ The residual is what that leaves: a retained unlock produces damage only if the 
 
 ## CSG-02 — Authorize key-management operations
 
-**Source risk:** TS-03 (pair an attacker key via OBD diagnostic) — risk Medium — treatment = Reduce. The same control covers the other key-management threats (TS-04 pairing via direct CAN injection; TS-05 / TS-06 revocation), which will reference CSG-02 once rated.
+**Source risk:** the four key-management threats — TS-03 and TS-04 (pairing, F-03, via OBD and via the exterior harness) and TS-05 and TS-06 (revocation, F-06, same two paths) — risk Medium each — treatment = Reduce. One control covers all four because it sits at the service level, independent of the arrival path.
 
 **Goal:** The BCM shall not execute a key-management operation (pairing or revocation of a key) without a successful authentication of the requester.
 
 **Initial state vs goal.** `01` §3 assumes no cybersecurity control on these services, so this goal introduces a control the item does not provide.
 
-**Rationale.** The key-management services (F-03 pair, F-06 revoke) execute for *anyone*. The vulnerability is not the OBD port or the CAN path, it is that the *service itself* performs no authorization, so any path that reaches it succeeds (OBD = TS-03, exterior harness = TS-04). Authentication binds the operation to an authorized requester, independently of the access path.
+**Rationale.** The key-management services (F-03 pair, F-06 revoke) execute for *anyone*. The vulnerability is not the OBD port or the CAN path, it is that the *service itself* performs no authorization, so any path that reaches it succeeds (pairing: TS-03 via OBD, TS-04 via the exterior harness; revocation: TS-05 and TS-06 on the same two paths). Authentication binds the operation to an authorized requester, independently of the access path.
 
 ### Cybersecurity concept
 
-Require a successful **Security Access** (UDS service 0x27) / authenticated-diagnostics exchange before any key-management service (F-03 / F-06) is executed. The check sits at the **BCM service level**, not at the port: the BCM verifies authorization whatever the request's arrival path, so one control covers both the OBD route (through the gateway) and the exterior-harness route (bypassing the gateway, TS-04). A control placed at the OBD port would cover TS-03 only.
+Require a successful **Security Access** (UDS service 0x27) / authenticated-diagnostics exchange before any key-management service (F-03 / F-06) is executed. The check sits at the **BCM service level**, not at the port: the BCM verifies authorization whatever the request's arrival path, so one control covers both the OBD route (through the gateway) and the exterior-harness route (bypassing the gateway). A control placed at the OBD port would cover the OBD lines only (TS-03, TS-05) and miss the exterior-harness lines (TS-04, TS-06).
 
 A 0x27 seed/key scheme relies on a secret that is typically shared across a model range. Certificate-based authentication (UDS 0x29, ISO 14229-1:2020) removes that shared secret and is the better target; its analysis, including the fleet-wide consequence of extracting a shared secret, is an open point.
 
@@ -111,15 +111,15 @@ A 0x27 seed/key scheme relies on a secret that is typically shared across a mode
 
 **Dependency:** CSR-HW-02 is a precondition for the whole goal. Under A-07 (debug access allows reading the BCM non-volatile memory) the Security Access secret could be read out via I-06b and the authentication defeated. CSG-02 is therefore only fully effective once the debug-readout path is closed — the precondition common to all four goals, recorded in `02` §9.
 
-**Traceability:** TS-03 (and later TS-04, TS-05, TS-06) → CSG-02 → {CSR-SYS-02, CSR-SW-02, CSR-HW-02} → verification. Carried in `04_traceability-matrix.csv`.
+**Traceability:** TS-03, TS-04, TS-05 and TS-06 → CSG-02 → {CSR-SYS-02, CSR-SW-02, CSR-HW-02} → verification. Carried in `04_traceability-matrix.csv`.
 
 ## CSG-03 — Make key-management operations accountable
 
-**Source risk:** TS-03 — risk Medium — treatment = Reduce (detective complement to CSG-02).
+**Source risk:** TS-03, TS-04, TS-05 and TS-06 — risk Medium — treatment = Reduce (detective complement to CSG-02).
 
 **Goal:** Every key-management operation shall leave a record attributable to its requester.
 
-**Rationale.** All other requirements in this document are preventive. A paired attacker key produces no symptom: the vehicle behaves normally and the owner has no way of noticing. Without a record, the whole "persistent covert access" family (TS-03, TS-04, and the key-record threats) is undetectable for the life of the vehicle. CSG-03 does not prevent the operation; it makes it visible afterwards. It depends on CSG-02, which is what establishes the requester's identity.
+**Rationale.** All other requirements in this document are preventive. A paired attacker key produces no symptom: the vehicle behaves normally and the owner has no way of noticing. Without a record, the whole "persistent covert access" family (TS-03, TS-04, and the key-record threats) is undetectable for the life of the vehicle. CSG-03 does not prevent the operation; it makes it visible afterwards. It depends on CSG-02, which is what establishes the requester's identity. For the pairing threats (TS-03, TS-04) the record gives **detection** — a rogue key leaves no other symptom. For the revocation threats (TS-05, TS-06) the denial is self-evident to the owner, so the record gives **attribution** rather than detection: who revoked, and when. CSR-SW-03 logs F-06 as well as F-03, so both are covered.
 
 ### Requirements
 
@@ -131,7 +131,7 @@ A 0x27 seed/key scheme relies on a secret that is typically shared across a mode
 
 **Note:** the record is itself an asset (integrity, and personal data where it is correlatable to the owner) and should be purged when the vehicle changes hands. Adding it to the asset register, and the purge-at-resale question, are open points.
 
-**Traceability:** TS-03 → CSG-03 → {CSR-SW-03} → verification. Carried in `04_traceability-matrix.csv`.
+**Traceability:** TS-03, TS-04, TS-05 and TS-06 → CSG-03 → {CSR-SW-03} → verification. Carried in `04_traceability-matrix.csv`.
 
 ## Risk retention
 
