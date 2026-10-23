@@ -2,7 +2,7 @@
 
 **Scope:** system-level TARA
 **Status:** fictional case study – generic passenger vehicle, no real OEM
-**Convention:** the item definition (clause 9) cites no identifier produced by the TARA (threat scenarios, damage scenarios, cybersecurity goals, residual risks). It may reference the TARA documents themselves (`02`, `03`), which are stable.
+**Convention:** the item definition (clause 9) cites no identifier produced by the TARA (threat scenarios, damage scenarios, cybersecurity goals). It may reference the TARA documents themselves (`02`, `03`), which are stable.
 
 ## 1. Item description
 
@@ -67,7 +67,7 @@ The BCM exposes a diagnostic endpoint on body CAN. The gateway routes diagnostic
 
 ## 3. Functions
 
-Functions reflect a representative RKE architecture. Diagnostic-based key management (F-03, F-04, F-06) is assumed as part of this fictional model.
+Functions reflect a representative RKE architecture. Diagnostic-based key management (F-03, F-04, F-06) is assumed as part of this fictional model. No cybersecurity control on these key-management services (e.g. Security Access 0x27, authorization) is assumed here: controls are derived from the TARA (see `03_goals-requirements.md`). The protection of BCM reprogramming (A-04) does not extend to these services.
 
 | ID | Function | Trigger | Actor |
 |---|---|---|---|
@@ -78,9 +78,7 @@ Functions reflect a representative RKE architecture. Diagnostic-based key manage
 | F-05 | Resynchronize the rolling-code counter: accepts a frame whose counter is ahead of the stored value within a bounded look-ahead window and updates the stored counter only after the authentication code is verified | Key fob (I-01) | User |
 | F-06 | Revoke a key | Diagnostic request (I-05 → I-04) | Workshop technician |
 
-**Which controls belong to the item.** The frame authentication code and the rolling-code counter of F-01, F-02 and F-05 are properties of the item as defined, so they are in force when the initial risk is rated in `02`. The key-management services (F-03, F-04, F-06) carry no assumed cybersecurity control (no Security Access, no authorization); theirs are derived from the TARA, and the protection of BCM reprogramming (A-04) does not extend to them. One part of the authentication is explicitly **not** in force: the command field is not covered by the authentication code (A-10), so a captured frame can be replayed carrying a command the owner never issued.
-
-The authentication and rolling-code checks protect radio-triggered actions, but only the frames they process: they verify a received code, not the integrity of the secrets and counters they rely on. A captured authentic code that the vehicle never received — and therefore never consumed — remains above the stored counter and is accepted when replayed later; a direct modification of the stored secrets or counter has the same effect. Either path defeats the function without breaking the checks themselves. These paths are analysed in the TARA (`02`) and their treatment is in `03`.
+The authentication and rolling-code checks protect radio-triggered actions, but only the frames they process: they verify a received code, not the integrity of the secrets and counters they rely on, nor which command the signed frame carries. A captured authentic code that the vehicle never received — and therefore never consumed — remains above the stored counter and is accepted when replayed later; its command field, not covered by the code (A-10), can be altered before replay; a direct modification of the stored secrets or counter has the same effect. Each path defeats the function without breaking the checks themselves. These paths are analysed in the TARA (`02`).
 
 ### Interface coverage check
 
@@ -126,20 +124,17 @@ The authentication and rolling-code checks protect radio-triggered actions, but 
 | A-01 | The gateway forwards only diagnostic requests addressed to the BCM; no other OBD frames reach body CAN | Common architecture | OBD gives direct, unfiltered access to body CAN and the BCM |
 | A-02 | Key secrets are provisioned securely at production | Out of scope (backend / factory) | Secrets may be known before vehicle delivery |
 | A-03 | The OBD port is located in the cabin; physical access to the cabin is required to reach it | Typical vehicle layout | Diagnostic interface reachable from outside the vehicle |
-| A-04 | BCM reprogramming via diagnostic is protected. Physical access through the debug interface (I-06b) is not covered by this assumption and is analysed | Out of scope (BCM-wide) | RKE logic can be replaced through diagnostic |
-| A-05 | F-05 accepts a counter ahead of the stored value within a bounded look-ahead window, to tolerate presses made out of radio range | Typical rolling-code tolerance | Resynchronisation after out-of-range presses fails. Note: the window is not what makes capture-and-replay work — a code the vehicle never received stays above the stored counter whatever the window width (see `03`) |
+| A-04 | BCM reprogramming via diagnostic is protected. Physical access through the debug interface (I-06b) is not covered by this assumption and is analysed (see A-07) | Out of scope (BCM-wide) | RKE logic can be replaced through diagnostic |
+| A-05 | F-05 accepts a counter ahead of the stored value within a bounded look-ahead window, to tolerate presses made out of radio range | Typical rolling-code tolerance | Resynchronisation after out-of-range presses fails. Note: the window is not what makes capture-and-replay work — a code the vehicle never received stays above the stored counter whatever the window width (see `03`, RES-01) |
 | A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking analysis must be reassessed |
-| A-07 | No effective debug-access protection prevents reading or writing the BCM non-volatile memory through I-06b | Explicit modelling assumption for this fictional case study | If such a protection is effective on this path, the secret, counter and key-record analyses no longer hold, and the dependency recorded on the key-management hardware requirement in `03` is satisfied by construction |
+| A-07 | No effective debug-access protection prevents reading or writing the BCM non-volatile memory through the debug interface (I-06b) | Explicit modelling assumption for this fictional case study | If such protection is effective on I-06b, the debug-path reads and writes (TS-08, TS-09, TS-10) no longer hold on this path; the derived requirement is CSG-05 in `03` |
 | A-08 | A mechanical key backup equips the vehicle and provides a physical access fallback if the fob is unavailable | Typical vehicle equipment | The owner is locked out until workshop intervention (higher operational impact) |
 | A-09 | The immobilizer prevents engine start without a paired key, so a vehicle opened through the RKE cannot be driven away | Separate item, out of scope (§4) | Financial impact rises to Severe (vehicle value) on the theft-related damage scenarios; the whole item would have to be re-rated |
-| A-10 | The authentication code covers the Key ID and the rolling-code counter; the command field is not covered by it | Explicit modelling assumption for this fictional case study | If the command field were covered, a captured lock frame could only replay as a lock: the replay analysis in `02` would produce no damage and the replay chain in `03` would have to be requalified. This assumption describes the item as currently defined — the requirement derived in `03` removes it, and once implemented the replay analysis must be re-rated |
-| A-11 | No effective firmware authenticity or integrity protection prevents a modified firmware, installed through I-06b, from executing | Explicit modelling assumption for this fictional case study | If such a protection is effective, the modified firmware is rejected and the firmware-flash analysis no longer holds |
-
-**Note on A-05:** this assumption records a design tolerance of F-05 that no threat scenario relies on. It is retained deliberately, to document what the item does, not to support a threat.
-
-**A-07 vs A-11:** the two are independent properties of a real BCM — effective secure boot with an open read path on the debug interface is a common configuration. They are stated separately so that each analysis cites only the one it needs.
+| A-10 | The authentication code does not cover the command field (lock / unlock / trunk): the command on a captured frame can be altered without invalidating the code | Explicit modelling assumption for this fictional case study | If the command field is covered, a captured lock frame cannot be replayed as unlock; the TS-01 command-flip path no longer holds (the attacker must capture a genuine unlock press). The derived requirement is CSG-04 in `03` |
+| A-11 | No effective firmware authenticity or integrity protection prevents a modified BCM firmware from being installed and executed | Explicit modelling assumption for this fictional case study | If such protection is effective, a modified firmware is rejected and the firmware-flash analysis (TS-11) no longer holds, even where debug write access exists (A-07) |
+| A-12 | No effective readout protection prevents extracting the key secret K from the key fob through its debug interface (I-06a) | Explicit modelling assumption for this fictional case study | If such protection is effective, K cannot be read and TS-07 no longer holds. Fob-side counterpart of A-07; the derived requirement is CSG-05 in `03` |
 
 ### Constraints
 
 - **Regulatory:** UN R155 (cybersecurity), Radio Equipment Directive 2014/53/EU (433 MHz emission), UN R10 (electromagnetic compatibility), GDPR (EU) 2016/679, art. 4(1) and art. 25 (the key ID broadcast in clear is a persistent identifier; data protection by design applies where an alternative exists).
-- **Technical:** battery-powered key fob (low power, lightweight cryptography), one-way radio link (key fob cannot receive), no real-time clock in the key fob.
+- **Technical:** battery-powered key fob (low power, lightweight cryptography), one-way radio link (key fob cannot receive), no real-time clock in the fob.
