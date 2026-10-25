@@ -14,8 +14,8 @@ ISO/SAE 21434, of a fictional **Remote Keyless Entry (RKE)** system.
 Entry-level automotive product-security work turns on one skill: taking a
 function, finding what can go wrong, and tracing each risk down to a testable
 requirement. This repo does exactly that on an RKE system — from the item
-definition to four worked risk families (replay, key management, physical
-debug, owner tracking), one of them carrying a documented residual.
+definition to the full set of worked risk families (replay, key management,
+physical debug, owner tracking), one of them carrying a documented residual.
 
 ## Method (inspired by ISO/SAE 21434)
 
@@ -54,25 +54,35 @@ asset + cybersecurity property → damage scenario → threat scenario
 - **Item definition:** complete — boundary, 7 interfaces (I-06 split into I-06a
   key fob / I-06b BCM because their access means differ), 6 functions,
   **12 assumptions**.
-- **Threat scenarios:** 12 identified across three attack surfaces — radio
-  (capture-and-jam replay, denial jamming, key-ID eavesdropping),
+- **Threat scenarios:** 12 identified across four attack surfaces — radio
+  (capture-and-jam replay, denial jamming, emission eavesdropping),
   diagnostic/CAN (key pairing and revocation via OBD or exterior harness),
-  physical debug (secret, counter and firmware access).
+  physical debug (secret, counter, firmware access).
 - **Impact:** rated on all four axes for the 4 damage scenarios.
 - **Rated and treated: 12 of 12**, with **7 goals** and **14 requirements**:
-  - **The replay chain — TS-01**: Major × High → High → Reduce (partial) →
-    **CSG-01** (counter freshness) + **CSG-04** (command binding), with **RES-01**
-    carrying the irreducible remainder, and a test specification (`05`).
-  - **The key-management family — TS-03 to TS-06**: Medium → Reduce → **CSG-02**
-    (authorization) + **CSG-03** (accountability).
-  - **The physical-access family — TS-07 to TS-11** (debug read/write of secrets,
-    key records, counter and firmware): Low → Reduce → **CSG-05** (debug-lock),
-    TS-11 also **CSG-06** (secure boot, which discharges A-11).
-  - **Owner tracking — TS-12** (Key ID eavesdropping): Major × High → High →
-    Reduce → **CSG-07** (non-correlatable identifier, GDPR art. 25).
+  - **The replay chain — TS-01** (replay of a code the vehicle never received):
+    Major × High → High → Reduce (partial) → **CSG-01** (counter freshness, bounds
+    the replay in time) + **CSG-04** (binds the command to the authentication
+    code, closing the lock→unlock variant), with **RES-01** carrying the
+    irreducible remainder, and a test specification (`05`).
+  - **The key-management family — TS-03 to TS-06** (pair or revoke a key, each
+    via OBD diagnostic and via direct CAN injection on the exterior harness):
+    pairing reaches DS-01 (Major), revocation reaches DS-02 (Moderate), all →
+    Medium → Reduce → **CSG-02** (authorization, service-level so it is
+    path-independent) + **CSG-03** (accountability). CSR-HW-02's debug dependency
+    is discharged by CSG-05.
+  - **The physical-access family — TS-07 to TS-11** (read the fob secret; read /
+    write the BCM memory; roll the counter back; flash a firmware — all via the
+    debug interface): Major × Low → Low → Reduce → **CSG-05** (protect the debug
+    interfaces, CSR-HW-05), reduced not by their own Low risk but because closing
+    the debug path is a precondition of CSG-02. TS-11 (firmware flash) is reduced
+    jointly by **CSG-06** (secure boot, CSR-SW-06 + CSR-HW-06), which rejects a
+    modified firmware whatever the installation path and discharges A-11.
+  - **Owner tracking — TS-12** (radio emission correlatable across transmissions
+    — the Key ID *and* the clear-text monotonic counter): Major × High → High →
+    Reduce → **CSG-07** (non-correlatable emission: the counter is moved inside an
+    authenticated-encrypted payload, GDPR art. 25).
   - **One accepted risk — TS-02** (denial jamming) → **ACC-01**, justified.
-- All 12 threat scenarios are rated and treated. Remaining work (full 5-factor
-  scoring, DS-05, AS-08/AS-09) is in `OPEN-POINTS.md`.
 
 ## Roadmap
 
@@ -80,7 +90,8 @@ asset + cybersecurity property → damage scenario → threat scenario
 |---|---|
 | v0.1 | Item definition, 12 threat scenarios, first replay chain |
 | v0.2 | A-05 and CSG-01 corrected (partial reduction + RES-01), CSG-03 accountability, feasibility definitions fixed, test specification, open points recorded |
-| v0.3 | Full 5-factor scoring of all lines; DS-05 (persistent access); AS-08 (Security Access secret) and AS-09 (firmware signing key) as assets — contents of `OPEN-POINTS.md` |
+| v0.2.x | All 12 scenarios rated and treated: CSG-04 (command binding), CSG-05 (debug protection), CSG-06 (secure boot), CSG-07 (non-correlatable emission over every observable field) |
+| v0.3 | Full 5-factor scoring of all lines; DS-05; AS-08 (Security Access secret) and AS-09 (firmware signing key); CSG-07 construction/nonce and fob-side hardware allocation; physical-layer fingerprinting — contents of `OPEN-POINTS.md` |
 | v1.0 | UN R155 / CSMS mapping |
 
 ## Limits
@@ -92,10 +103,13 @@ aggregation by maximum, access-means-dominant feasibility) that a real programme
 would agree with stakeholders.
 
 Several lines rely on explicitly stated assumptions — A-06 for tracking, A-07 and
-A-12 for the debug paths, A-10 for the command-field replay, A-09 for the impact
-ceiling. A-11 (firmware integrity) is now discharged by CSG-06. If the remaining
-assumptions do not hold, the corresponding lines must be reassessed; A-09 in
-particular would raise the Financial axis to Severe and re-rate the whole item.
+A-12 for the debug paths, A-10 for the command-field replay, A-11 for the
+firmware path, A-09 for the impact ceiling. If those do not hold, the
+corresponding lines must be reassessed; A-09 in particular would raise the
+Financial axis to Severe and re-rate the whole item.
+
+CSG-07 bounds correlation at frame level only; physical-layer fingerprinting of
+the fob transmitter is a documented limit, not a covered threat.
 
 No verification has been executed: every requirement is at status *Planned*, and
 `05_test-spec-CSR-SYS-01.md` is a specification, not a test report.

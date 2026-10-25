@@ -10,6 +10,8 @@ Remote Keyless Entry (RKE) system of a generic passenger vehicle. The user press
 
 Each key fob is provisioned during production with a unique, randomly generated secret K. No fleet-wide master key is used. The BCM stores the secrets of all paired keys.
 
+**Why a unique random K rather than a derived one.** A derivation K_fob = f(K_master, serial) would save provisioning effort but turns the extraction of one master key — a published class of side-channel attack on deployed rolling-code systems — into a compromise of the entire fleet. Unique random provisioning is what bounds a debug or extraction compromise to a single vehicle, and what makes the Major × Low = Low rating of the physical-access family defensible (`02` §5).
+
 ## 2. Architecture & boundary
 
 ```
@@ -126,7 +128,7 @@ The authentication and rolling-code checks protect radio-triggered actions, but 
 | A-03 | The OBD port is located in the cabin; physical access to the cabin is required to reach it | Typical vehicle layout | Diagnostic interface reachable from outside the vehicle |
 | A-04 | BCM reprogramming via diagnostic is protected. Physical access through the debug interface (I-06b) is not covered by this assumption and is analysed (see A-07) | Out of scope (BCM-wide) | RKE logic can be replaced through diagnostic |
 | A-05 | F-05 accepts a counter ahead of the stored value within a bounded look-ahead window, to tolerate presses made out of radio range | Typical rolling-code tolerance | Resynchronisation after out-of-range presses fails. Note: the window is not what makes capture-and-replay work — a code the vehicle never received stays above the stored counter whatever the window width (see `03`, RES-01) |
-| A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking analysis must be reassessed — which is exactly the control introduced by CSG-07 in `03` |
+| A-06 | The Key ID is stable across successive transmissions from the same fob | Explicit modelling assumption for this fictional case study | If the identifier rotates or is otherwise unlinkable, the tracking analysis must be reassessed — but not closed: the rolling-code counter, monotonic by design (§3, F-01/F-05), remains a linking field on its own, which is why CSG-07 in `03` is stated over every observable field |
 | A-07 | No effective debug-access protection prevents reading or writing the BCM non-volatile memory through the debug interface (I-06b) | Explicit modelling assumption for this fictional case study | If such protection is effective on I-06b, the debug-path reads and writes (TS-08, TS-09, TS-10) no longer hold on this path; the derived requirement is CSG-05 in `03` |
 | A-08 | A mechanical key backup equips the vehicle and provides a physical access fallback if the fob is unavailable | Typical vehicle equipment | The owner is locked out until workshop intervention (higher operational impact) |
 | A-09 | The immobilizer prevents engine start without a paired key, so a vehicle opened through the RKE cannot be driven away | Separate item, out of scope (§4) | Financial impact rises to Severe (vehicle value) on the theft-related damage scenarios; the whole item would have to be re-rated |

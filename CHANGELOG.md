@@ -14,17 +14,24 @@
   the command-flip, and RES-01 narrows to the replay of a genuinely captured
   unlock before the next legitimate press.
 - CSG-05 (protect the debug interfaces I-06a / I-06b) with CSR-HW-05 (readout
-  protection / debug lock at production). Treats TS-07, TS-08 and TS-09; it is
-  justified by the §9 dependency (closing the debug path is the precondition of
-  CSG-02), not by the Low risk of each line, and it discharges the debug-path
-  dependency on CSR-HW-02.
-- CSG-06 (firmware authenticity / secure boot) with CSR-SW-06 (signature check at
-  start-up) and CSR-HW-06 (root of trust in immutable storage). Discharges A-11,
-  the firmware-integrity assumption that had no goal until now. Treats TS-11
-  jointly with CSG-05.
-- CSG-07 (non-correlatable identifier) with CSR-SYS-07 / CSR-SW-07. Treats TS-12
-  (the second High risk of the study) with a rotating identifier resolved by the
-  BCM over its stored keys; backs the GDPR art. 25 argument, no new hardware.
+  protection / debug lock at production). Treats TS-07 to TS-11; it is justified
+  by the §9 dependency (closing the debug path is the precondition of CSG-02),
+  not by the Low risk of each line, and it discharges the debug-path dependency
+  on CSR-HW-02.
+- CSG-06 (firmware authenticity / secure boot) with CSR-SW-06 (startup signature
+  check) and CSR-HW-06 (root of trust in immutable storage). Treats TS-11 jointly
+  with CSG-05: CSG-05 closes the injection path I-06b, CSG-06 rejects a modified
+  firmware whatever the path. Discharges A-11.
+- CSG-07 (non-correlatable radio emission) with CSR-SYS-07 / CSR-SW-07. Treats
+  TS-12 (the second High risk of the study). The goal is stated over every
+  observable field, not over "the identifier": rotating the Key ID alone would
+  have left the clear-text monotonic counter as a linking field. The counter
+  travels inside an authenticated-encrypted payload (freshness kept, read after
+  tag verification), a non-correlatable nonce replaces it on the wire, and the
+  verification criterion is a non-correlation test over all fields. Backs the
+  GDPR art. 25 argument. Construction/nonce choice and the fob-side hardware
+  allocation are open points; physical-layer fingerprinting is a documented
+  limit.
 - `02_tara-method.md` §5: explicit reading rule that a measure can be justified
   by a dependency, not only by its own risk value (supports CSG-05).
 
@@ -36,23 +43,29 @@
   revocation the record gives attribution rather than detection. TS-04 and TS-06
   (Expert + Specialized) are flagged as candidates to drop to Low under the full
   5-factor scoring.
-- TS-07, TS-08 and TS-09 rated (feasibility Low, risk Low) and treated
-  (Reduce → CSG-05): the physical-access family (fob secret read; BCM secrets
-  read; BCM key record overwritten).
-- TS-10, TS-11 and TS-12 rated, completing the TARA at 12/12. TS-10 (counter
-  rollback) and TS-11 (firmware flash) are Low → Reduce → CSG-05 (TS-11 also
-  CSG-06); TS-12 (Key ID tracking) is Major × High = High → Reduce → CSG-07.
+- TS-07, TS-08, TS-09, TS-10 and TS-11 rated (feasibility Low, risk Low) and
+  treated (Reduce → CSG-05): the physical-access family (fob secret read; BCM
+  secrets read; BCM key record overwritten; counter rolled back; firmware
+  flashed). TS-11 also → CSG-06.
+- TS-12 rated (feasibility High, risk High) and treated (Reduce → CSG-07): owner
+  tracking by eavesdropping a correlatable radio emission.
+- AS-07 and DS-03 restated from "persistent Key ID" to a correlatable radio
+  emission: the Key ID and the monotonic rolling-code counter are each sufficient
+  on their own to link successive transmissions, so the asset and the damage
+  scenario now name both. TS-12's asset, threat scenario and attack path follow.
 - TS-01 treatment is now CSG-01 + CSG-04 + RES-01; its attack path and
   `assumptions` reference A-10 (command-field flip).
-- `02_tara-method.md` §7 and §9 updated to the goals; §9 now prevents TS-11 on
-  two layers (CSG-05 debug-lock + CSG-06 secure boot); §5 dependency family
-  extended to TS-07..TS-11.
+- `02_tara-method.md` §7 and §9 updated to the seven goals; §9 now names CSG-05
+  (closes the debug injection path) and CSG-06 (secure boot) as the two layers
+  that defeat the firmware-replacement dependency, and records that CSG-01 and
+  CSG-07 converge on one frame construction.
 - `02_tara.csv`: TS-02 `cs_goal` set to ACC-01 (was N/A), aligning denial jamming
   with the decision-id convention used for RES-01.
-- `04_traceability-matrix.csv`: rows added for CSG-04, TS-04..TS-12, CSG-05,
-  CSG-06 and CSG-07; the CSR-HW-02 note now reads "discharged by CSG-05".
+- `04_traceability-matrix.csv`: rows added for CSG-04, CSG-05, CSG-06, CSG-07 and
+  TS-04..TS-12; the CSR-HW-02 note now reads "discharged by CSG-05".
 - README: current state is 12 of 12 rated, 7 goals, 14 requirements, 12
-  assumptions (A-11 discharged by CSG-06).
+  assumptions; roadmap updated (all scenarios rated; v0.3 scoped to full scoring,
+  DS-05, AS-08/AS-09 and the CSG-07 construction/fingerprinting open points).
 
 ## [0.2.0] — 2026-10-22
 

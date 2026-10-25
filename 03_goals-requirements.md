@@ -2,7 +2,7 @@
 
 **Scope:** cybersecurity goals and requirements derived from `02_tara.csv`
 **Status:** fictional case study – generic passenger vehicle, no real OEM
-**Coverage:** TS-01 is treated by *Reduce* with two goals — CSG-01 (counter freshness) and CSG-04 (command binding) — plus a documented residual (RES-01). The key-management family TS-03..TS-06 is treated by *Reduce* with CSG-02 (authorization) and CSG-03 (accountability). The physical-access family TS-07..TS-11 is treated by *Reduce* with CSG-05 (protect the debug interfaces), TS-11 jointly with CSG-06 (secure boot). TS-12 (Key ID tracking, High) is treated by *Reduce* with CSG-07 (non-correlatable identifier). TS-02 is treated by *Accept* and recorded under "Risk acceptance" (ACC-01). All 12 threat scenarios are now rated and treated.
+**Coverage:** TS-01 is treated by *Reduce* with two goals — CSG-01 (counter freshness) and CSG-04 (command binding) — plus a documented residual (RES-01). The key-management family TS-03..TS-06 is treated by *Reduce* with CSG-02 (authorization) and CSG-03 (accountability). The physical-access family TS-07..TS-11 is treated by *Reduce* with CSG-05 (protect the debug interfaces), TS-11 jointly with CSG-06 (secure boot). TS-12 (owner tracking, High) is treated by *Reduce* with CSG-07 (non-correlatable radio emission). TS-02 is treated by *Accept* and recorded under "Risk acceptance" (ACC-01). All 12 threat scenarios are now rated and treated.
 
 A cybersecurity **goal** states *what* must be prevented (the effect), not *how*. The **concept** names the control and where it sits. The **requirements** (CSR) make the concept testable, allocated to system (SYS), software (SW) and hardware (HW).
 
@@ -22,7 +22,7 @@ A risk treated by **Accept (Retain)** produces no goal and no requirement — no
 
 ### Cybersecurity concept
 
-Accept a radio command only if its rolling-code counter is strictly greater than the last accepted counter, within the F-05 look-ahead window. The stored counter is updated only after the authentication code is verified. The underlying principle — freshness, as opposed to origin authentication — is the same one SecOC (AUTOSAR Secure Onboard Communication) applies on in-vehicle buses; SecOC itself is not transposable here, as it assumes a bus and an AUTOSAR stack, where this link is a battery-powered fob on a one-way UHF channel. No specific product is mandated at this stage.
+Accept a radio command only if its rolling-code counter is strictly greater than the last accepted counter, within the F-05 look-ahead window. The stored counter is updated only after the authentication code is verified. The underlying principle — freshness, as opposed to origin authentication — is the same one SecOC (AUTOSAR Secure Onboard Communication) applies on in-vehicle buses; SecOC itself is not transposable here, as it assumes a bus and an AUTOSAR stack, where this link is a battery-powered fob on a one-way UHF channel. No specific product is mandated at this stage. Where the counter is also protected against eavesdropping (CSG-07), its on-air integrity is carried by the authentication tag of the frame defined there — CSG-01 consumes that tag, it does not add a second mechanism.
 
 ### Requirements
 
@@ -148,20 +148,40 @@ Require a successful **Security Access** (UDS service 0x27) / authenticated-diag
 
 **Traceability:** TS-11 → CSG-06 → {CSR-SW-06, CSR-HW-06} → verification (TS-11 also → CSG-05). Carried in `04_traceability-matrix.csv`.
 
-## CSG-07 — Non-correlatable identifier (rolling identifier)
+## CSG-07 — Non-correlatable radio emission
 
 **Source risk:** TS-12 (Key ID eavesdropping / owner tracking) — risk **High** — treatment = Reduce. Treats DS-03; mandated by GDPR art. 25 (`01` §6).
 
-**Goal:** The RKE system shall not expose on I-01 a stable identifier that lets an observer correlate a fob's transmissions over time.
+**Goal:** The RKE system shall not expose on I-01 any observable data that lets an observer correlate two transmissions of the same key fob.
 
-**Rationale.** TS-12 is the second **High** line of the study (Major × High), so it cannot be accepted like the Low debug lines. The Key ID is sent in clear and stable (A-06), so a passive observer links each transmission to the owner. A rotating / pseudonymous identifier makes successive frames unlinkable; the BCM resolves the emitting key by trying its stored secrets (one verification per stored key per frame), which is feasible given the small number of paired keys. It **reuses the rolling-code mechanism already present, so no new hardware** — which is precisely what supports the art. 25 argument: the countermeasure is technically available at reasonable cost, so its absence is not defensible.
+**Initial state vs goal.** `01` §2 describes the I-01 frame as carrying the Key ID, the counter, the authentication code and the command, the Key ID and counter in clear, and A-06 states the Key ID is stable. This goal changes the frame format. Same assumption-vs-requirement pattern as A-10 / CSG-04 and A-07 / CSG-05.
+
+**Rationale.** TS-12 is the second **High** line of the study (Major × High), so it cannot be retained like the Low debug lines. The Key ID is not the only linking field: the rolling-code counter is transmitted in clear and is **monotonic** — successive values (4471, 4472, 4473) identify one fob as surely as a fixed identifier. Rotating the identifier while leaving the counter in clear moves the linking field, it does not remove it. The goal is therefore stated over **every observable field**, not over "the identifier".
+
+### Cybersecurity concept
+
+The frame shall provide, together: **confidentiality** of the counter (so it is not readable → tracking) and **integrity** of the counter and command (so they cannot be forged or bit-flipped → replay / command-flip). These are the two properties of **authenticated encryption**: the payload `{counter, command}` is encrypted and carries an authentication tag; nothing else travels in clear that could link two frames; the tag is verified **before** the payload is decrypted.
+
+**Nonce and counter — reconciliation.** An authenticated-encryption construction needs a nonce. The nonce must not itself be a linking field: reused as the rolling-code counter (the natural reflex) it would travel in clear and monotonic, reopening TS-12. The counter is therefore **not reused as the public nonce**; it is kept for freshness (CSG-01) **inside the authenticated payload**, recovered only after the tag is verified. The nonce is a separate, non-correlatable value. Its generation and length — a random nonce sized against the birthday bound, or a separate non-observable source — are a frame-budget trade-off recorded as an open point (`OPEN-POINTS.md`).
+
+**No primitive is mandated** at this stage: the required properties and the family (authenticated encryption, truncated tag, bounded verification) are specified; the construction and primitive belong to the design phase.
+
+**Consistency with CSG-01.** Because the counter is no longer readable before verification, the BCM must verify the tag, recover the counter, then apply the freshness check and update the stored value — the order CSR-SW-01 already requires. Two goals from two distinct risks (replay, tracking) converge on one frame construction: CSG-01 / CSG-04 consume its **tag** (integrity), CSG-07 consumes its **encryption** (confidentiality).
+
+**Effect on F-04.** With a rotating on-air identifier, the identifier emitted on I-01 and the Key ID listed by F-04 are no longer the same object: F-04 lists the **stored** identity, visible over diagnostics only. This conditions the "reference baseline for F-04" open point.
 
 ### Requirements
 
 | req_id | Level | Requirement | Verification |
 |---|---|---|---|
-| CSR-SYS-07 | System | No stable identifier correlatable across transmissions shall be observable on the radio link (I-01). | Test (capture successive frames, verify the observable identifier differs) |
-| CSR-SW-07 | Software | The BCM shall identify the emitting key by trial over its stored secrets (one verification per stored key per frame) rather than by reading a clear-text identifier. | Test / review |
+| CSR-SYS-07 | System | No field observable on I-01 — identifier, nonce, ciphertext or tag — shall be constant across transmissions of one fob or carry an order relation between them, so that two transmissions of the same fob cannot be correlated. | Test — see verification note |
+| CSR-SW-07 | Software | The BCM shall identify the emitting key by trial over its stored secrets (one tag verification per stored key per frame) and recover the rolling-code counter from the authenticated payload only after the tag is verified; the number of frame verifications accepted per unit of time shall be bounded, so that the truncated tag's forgery probability stays negligible over the vehicle lifetime and the per-frame trial over stored secrets cannot raise the quiescent current of a parked vehicle. | Test / review (incl. invalid-frame flooding; acceptance rate and current draw) |
+
+**Verification note (CSR-SYS-07).** Capture at least 50 successive frames from one fob and 50 from a second, decode the fields, and verify for every field (nonce included) that it is neither constant nor ordered across one fob's frames, and that the two fobs' values are not separable into disjoint ranges. A criterion limited to "the observable identifier differs between two frames" is **not** sufficient — it passes while a monotonic counter or nonce stays correlatable.
+
+### Documented limit — physical-layer fingerprinting
+
+CSR-SYS-07 bounds correlation at frame level. It does not remove correlation at **physical level** (crystal frequency offset, turn-on transient, modulation imperfections), which a determined observer can fingerprint with suitable equipment. No frame-format requirement reaches this; it is an RF design constraint on the fob, recorded as a lead in `OPEN-POINTS.md` so the goal is not over-claimed.
 
 **Traceability:** TS-12 → CSG-07 → {CSR-SYS-07, CSR-SW-07} → verification. Carried in `04_traceability-matrix.csv`.
 
