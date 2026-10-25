@@ -12,6 +12,8 @@ risk (TS) → goal (CSG) → concept → requirements (CSR-SYS / CSR-SW / CSR-HW
 
 A risk treated by **Accept (Retain)** produces no goal and no requirement — no control is built — so it is not given a CSG. It is recorded as a justified acceptance (see "Risk acceptance" below). A risk only **partially** reduced keeps its goal(s) and records what they do not cover as a named residual (RES-xx).
 
+> **On "addressed" vs "discharged":** a dependency or assumption is *addressed* when a requirement exists that closes it, and *discharged* only once that requirement's verification status reaches *Passed*. Every requirement here is at status *Planned*, so nothing is discharged in this version (convention in `02_tara-method.md` §8).
+
 ## CSG-01 — Reject a code whose counter has already been reached
 
 **Source risk:** TS-01 — risk High — treatment = **Reduce (partial)**, jointly with CSG-04; remainder documented as RES-01.
@@ -30,7 +32,7 @@ Accept a radio command only if its rolling-code counter is strictly greater than
 |---|---|---|---|
 | CSR-SYS-01 | System | The RKE system shall reject a radio command whose counter is not strictly greater than the last accepted counter. | Test — see `05_test-spec-CSR-SYS-01.md` |
 | CSR-SW-01 | Software | The BCM software shall verify that the received counter is strictly greater than the stored counter before executing the command, and update the stored counter only after the authentication code is verified (consistent with F-05). | Test — see `05_test-spec-CSR-SYS-01.md` |
-| CSR-HW-01 | Hardware | The accepted counter shall be held in non-volatile memory (Flash/EEPROM) and protected against modification from outside the RKE software. | Review + test |
+| CSR-HW-01 | Hardware | The accepted counter shall be held in non-volatile memory (Flash/EEPROM); no software path other than the RKE logic shall be able to modify it. Protection against physical modification through the debug interface (I-06b) is out of this requirement's scope and is covered by CSG-05 (TS-10). | Review + test |
 
 **Traceability:** TS-01 → CSG-01 → {CSR-SYS-01, CSR-SW-01, CSR-HW-01} → verification, with CSG-04 and RES-01. Carried in `04_traceability-matrix.csv`.
 
@@ -65,7 +67,7 @@ Include the command field in the payload over which the authentication code (rol
 
 **Measure considered, not retained in this version:** monitoring the received RF level (RSSI) at the receiver, to detect the jammer rather than the missing frame. Setting a threshold in the crowded 433 MHz ISM band (TPMS, weather stations, gate remotes) requires a measurement campaign outside the scope of this study. Recorded as a lead in `OPEN-POINTS.md`. Note the split: the receiver C-02 is inside the item boundary, so the detection itself would be in scope; only the notification to the driver would be a requirement allocated outside the item.
 
-**Decision:** risk retained as a documented residual. Carried in `04_traceability-matrix.csv` under RES-01.
+**Decision:** risk retained as a documented residual. **Residual risk level: High (unchanged).** The remaining variant is still a radio attack with no intrusion, so under the access-means scale (`02_tara-method.md` §4) its feasibility stays High and the residual stays High. CSG-01 and CSG-04 removed the other variants (replay of an already-accepted code; the lock→unlock flip), not this one. "Documented residual" means the risk is knowingly retained at High, not reduced to a lower band; no control within the one-way-link constraint (`01` §6) lowers it. Carried in `04_traceability-matrix.csv` under RES-01.
 
 ## CSG-02 — Authorize key-management operations
 
@@ -87,7 +89,7 @@ Require a successful **Security Access** (UDS service 0x27) / authenticated-diag
 | CSR-SW-02 | Software | The BCM software shall require a successful Security Access (UDS 0x27) authentication before executing a key-management service (F-03 pair / F-06 revoke); on failed or absent authentication, the request is rejected. | Test |
 | CSR-HW-02 | Hardware | The Security Access secret shall be held in protected non-volatile storage not extractable through the debug interface (readout protection, or HSM/SHE), so that I-06b does not expose it. | Review + test |
 
-**Dependency:** CSR-HW-02 is a precondition for the whole goal. Under assumption A-07 (no effective debug-access protection), the Security Access secret could be read out via I-06b and the authentication defeated. CSG-02 is therefore only fully effective once the debug-readout path is closed — which is the object of **CSG-05**, the common precondition recorded in `02_tara-method.md` §9. CSG-05 discharges this dependency.
+**Dependency:** CSR-HW-02 is a precondition for the whole goal. Under assumption A-07 (no effective debug-access protection), the Security Access secret could be read out via I-06b and the authentication defeated. CSG-02 is therefore only fully effective once the debug-readout path is closed — which is the object of **CSG-05**, the common precondition recorded in `02_tara-method.md` §9. CSG-05 addresses this dependency (discharged once implemented).
 
 **Traceability:** TS-03, TS-04, TS-05, TS-06 → CSG-02 → {CSR-SYS-02, CSR-SW-02, CSR-HW-02} → verification. Carried in `04_traceability-matrix.csv`.
 
@@ -125,17 +127,17 @@ Require a successful **Security Access** (UDS service 0x27) / authenticated-diag
 |---|---|---|---|
 | CSR-HW-05 | Hardware | Readout protection / debug lock shall be enabled at production on the key fob (I-06a) and the BCM (I-06b), so that the debug interface neither discloses stored secrets nor permits writing the non-volatile memory. A secret required to resist this shall reside in a secure element (SHE/HSM). | Review + test |
 
-**Discharges:** the debug-path dependency on CSR-HW-02 (Security Access secret) — once CSG-05 is implemented, the "depends on A-07" caveat is satisfied by construction.
+**Addresses:** the debug-path dependency on CSR-HW-02 (Security Access secret); discharged once CSG-05 is implemented and verified (status Planned).
 
 **Traceability:** TS-07, TS-08, TS-09, TS-10, TS-11 → CSG-05 → {CSR-HW-05} → verification. Carried in `04_traceability-matrix.csv`.
 
 ## CSG-06 — Firmware authenticity (secure boot)
 
-**Source risk:** TS-11 (firmware flashed via the BCM debug interface) — risk Low — treatment = Reduce, jointly with CSG-05. **Discharges A-11.**
+**Source risk:** TS-11 (firmware flashed via the BCM debug interface) — risk Low — treatment = Reduce, jointly with CSG-05. **Addresses A-11** (discharged once CSG-06 is implemented and verified; status Planned).
 
 **Goal:** The BCM shall execute only firmware whose authenticity and integrity have been verified.
 
-**Initial state vs goal.** A-11 states that no firmware authenticity protection is present — that is the item as analysed. This goal introduces the control that removes A-11, the same assumption-vs-requirement pattern as A-07 / CSG-05 and A-10 / CSG-04.
+**Initial state vs goal.** A-11 states that no firmware authenticity protection is present — that is the item as analysed. This goal introduces the control that addresses A-11, the same assumption-vs-requirement pattern as A-07 / CSG-05 and A-10 / CSG-04.
 
 **Rationale.** TS-11 does not trick the RKE logic, it **replaces** it: a backdoored firmware voids CSG-01, CSG-02, CSG-03 and CSG-04 at once (`02_tara-method.md` §9). The firmware cannot protect itself, so the control sits **below** it, on two complementary layers: CSG-05 (debug-lock) closes the injection path I-06b, and CSG-06 (secure boot) rejects a modified firmware **whatever the installation path**. Secure boot = a cryptographic signature of the firmware, verified at start-up by an immutable boot stage anchored in a hardware root of trust.
 

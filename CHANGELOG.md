@@ -16,12 +16,13 @@
 - CSG-05 (protect the debug interfaces I-06a / I-06b) with CSR-HW-05 (readout
   protection / debug lock at production). Treats TS-07 to TS-11; it is justified
   by the §9 dependency (closing the debug path is the precondition of CSG-02),
-  not by the Low risk of each line, and it discharges the debug-path dependency
-  on CSR-HW-02.
+  not by the Low risk of each line, and it addresses the debug-path dependency
+  on CSR-HW-02 (discharged once implemented).
 - CSG-06 (firmware authenticity / secure boot) with CSR-SW-06 (startup signature
   check) and CSR-HW-06 (root of trust in immutable storage). Treats TS-11 jointly
   with CSG-05: CSG-05 closes the injection path I-06b, CSG-06 rejects a modified
-  firmware whatever the path. Discharges A-11.
+  firmware whatever the path. Addresses A-11 (discharged once implemented and
+  verified).
 - CSG-07 (non-correlatable radio emission) with CSR-SYS-07 / CSR-SW-07. Treats
   TS-12 (the second High risk of the study). The goal is stated over every
   observable field, not over "the identifier": rotating the Key ID alone would
@@ -34,6 +35,11 @@
   limit.
 - `02_tara-method.md` §5: explicit reading rule that a measure can be justified
   by a dependency, not only by its own risk value (supports CSG-05).
+- `02_tara-method.md` §8: addressed-vs-discharged convention — a dependency or
+  assumption is *addressed* when a requirement exists that closes it, and
+  *discharged* only once that requirement's verification reaches *Passed*;
+  nothing is discharged while every requirement is at status *Planned*. Mirrors
+  the initial-vs-residual rule already in §8.
 
 ### Changed
 - TS-04, TS-05 and TS-06 rated (feasibility Medium, risk Medium) and treated
@@ -54,7 +60,19 @@
   on their own to link successive transmissions, so the asset and the damage
   scenario now name both. TS-12's asset, threat scenario and attack path follow.
 - TS-01 treatment is now CSG-01 + CSG-04 + RES-01; its attack path and
-  `assumptions` reference A-10 (command-field flip).
+  `assumptions` reference A-10 (command-field flip). RES-01 now states its
+  residual level explicitly — retained at **High**, the same band as the initial
+  risk, because the remaining variant (replay of a genuine unlock) sits in the
+  same access-means band; "documented residual" means knowingly retained, not
+  reduced.
+- CSR-HW-01 tightened to software scope: "no software path other than the RKE
+  logic shall modify the counter"; physical modification through the debug
+  interface (TS-10) is out of its scope and covered by CSG-05, removing the
+  overlap where CSR-HW-01 implicitly re-claimed the debug write.
+- `discharges`/`discharged` relabelled to `addressed … (planned)` across `03`,
+  `02_tara-method.md` §9, `04` (the four CSR-HW-02 rows), README and this file:
+  nothing is discharged while every requirement is at status *Planned*. "once
+  implemented/verified" formulas and the convention definition keep the word.
 - `02_tara-method.md` §7 and §9 updated to the seven goals; §9 now names CSG-05
   (closes the debug injection path) and CSG-06 (secure boot) as the two layers
   that defeat the firmware-replacement dependency, and records that CSG-01 and
@@ -62,10 +80,11 @@
 - `02_tara.csv`: TS-02 `cs_goal` set to ACC-01 (was N/A), aligning denial jamming
   with the decision-id convention used for RES-01.
 - `04_traceability-matrix.csv`: rows added for CSG-04, CSG-05, CSG-06, CSG-07 and
-  TS-04..TS-12; the CSR-HW-02 note now reads "discharged by CSG-05".
+  TS-04..TS-12; the CSR-HW-02 note now reads "addressed by CSG-05 (planned)".
 - README: current state is 12 of 12 rated, 7 goals, 14 requirements, 12
   assumptions; roadmap updated (all scenarios rated; v0.3 scoped to full scoring,
-  DS-05, AS-08/AS-09 and the CSG-07 construction/fingerprinting open points).
+  DS-05, AS-08/AS-09 and the CSG-07 construction/fingerprinting open points);
+  Limits now note the High residual (RES-01) and the addressed-vs-discharged rule.
 
 ## [0.2.0] — 2026-10-22
 

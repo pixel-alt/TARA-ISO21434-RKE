@@ -70,14 +70,14 @@ asset + cybersecurity property → damage scenario → threat scenario
     pairing reaches DS-01 (Major), revocation reaches DS-02 (Moderate), all →
     Medium → Reduce → **CSG-02** (authorization, service-level so it is
     path-independent) + **CSG-03** (accountability). CSR-HW-02's debug dependency
-    is discharged by CSG-05.
+    is addressed by CSG-05 (planned).
   - **The physical-access family — TS-07 to TS-11** (read the fob secret; read /
     write the BCM memory; roll the counter back; flash a firmware — all via the
     debug interface): Major × Low → Low → Reduce → **CSG-05** (protect the debug
     interfaces, CSR-HW-05), reduced not by their own Low risk but because closing
     the debug path is a precondition of CSG-02. TS-11 (firmware flash) is reduced
     jointly by **CSG-06** (secure boot, CSR-SW-06 + CSR-HW-06), which rejects a
-    modified firmware whatever the installation path and discharges A-11.
+    modified firmware whatever the installation path and addresses A-11 (planned).
   - **Owner tracking — TS-12** (radio emission correlatable across transmissions
     — the Key ID *and* the clear-text monotonic counter): Major × High → High →
     Reduce → **CSG-07** (non-correlatable emission: the counter is moved inside an
@@ -90,7 +90,7 @@ asset + cybersecurity property → damage scenario → threat scenario
 |---|---|
 | v0.1 | Item definition, 12 threat scenarios, first replay chain |
 | v0.2 | A-05 and CSG-01 corrected (partial reduction + RES-01), CSG-03 accountability, feasibility definitions fixed, test specification, open points recorded |
-| v0.2.x | All 12 scenarios rated and treated: CSG-04 (command binding), CSG-05 (debug protection), CSG-06 (secure boot), CSG-07 (non-correlatable emission over every observable field) |
+| v0.2.x | All 12 scenarios rated and treated: CSG-04 (command binding), CSG-05 (debug protection), CSG-06 (secure boot), CSG-07 (non-correlatable emission over every observable field); addressed-vs-discharged convention |
 | v0.3 | Full 5-factor scoring of all lines; DS-05; AS-08 (Security Access secret) and AS-09 (firmware signing key); CSG-07 construction/nonce and fob-side hardware allocation; physical-layer fingerprinting — contents of `OPEN-POINTS.md` |
 | v1.0 | UN R155 / CSMS mapping |
 
@@ -99,8 +99,9 @@ asset + cybersecurity property → damage scenario → threat scenario
 Fictional target and simulated environment. Not a conformity assessment.
 
 Ratings use conventions documented in `02_tara-method.md` (e.g. impact
-aggregation by maximum, access-means-dominant feasibility) that a real programme
-would agree with stakeholders.
+aggregation by maximum, access-means-dominant feasibility, and the
+addressed-vs-discharged rule §8) that a real programme would agree with
+stakeholders.
 
 Several lines rely on explicitly stated assumptions — A-06 for tracking, A-07 and
 A-12 for the debug paths, A-10 for the command-field replay, A-11 for the
@@ -108,8 +109,13 @@ firmware path, A-09 for the impact ceiling. If those do not hold, the
 corresponding lines must be reassessed; A-09 in particular would raise the
 Financial axis to Severe and re-rate the whole item.
 
+The replay chain keeps a residual (RES-01) at High: CSG-01 and CSG-04 bound and
+narrow TS-01 but cannot close the replay of a genuinely captured unlock on a
+one-way link; it is knowingly retained, not reduced.
+
 CSG-07 bounds correlation at frame level only; physical-layer fingerprinting of
 the fob transmitter is a documented limit, not a covered threat.
 
-No verification has been executed: every requirement is at status *Planned*, and
+No verification has been executed: every requirement is at status *Planned*, so
+no assumption or dependency is discharged in this version (addressed only), and
 `05_test-spec-CSR-SYS-01.md` is a specification, not a test report.
