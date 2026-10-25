@@ -12,7 +12,7 @@
 | Damage scenario | DS-01 | Parked vehicle opened by an unauthorized person |
 | Assumption | A-10 | The command field is not covered by the authentication code |
 | Goal (bounds) | CSG-01 | Reject a code whose counter is not strictly greater than the last accepted counter |
-| Goal (closes) | CSG-04 | A replayed frame shall not carry a command other than the one issued |
+| Goal (closes) | CSG-04 | The RKE system shall not act on a radio command whose command field is not covered by the authentication code computed by the key fob |
 | Requirements | CSR-SYS-01, CSR-SW-01, CSR-SYS-04, CSR-SW-04 | Reject a stale counter; update the stored counter only after the code is verified; cover the command field |
 | Residual | RES-01 | What survives both goals — see `03` |
 

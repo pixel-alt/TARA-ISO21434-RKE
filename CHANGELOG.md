@@ -113,7 +113,8 @@
 - 02_tara.csv: new `assumptions` column.
 - 05_test-spec-CSR-SYS-01.md: test specification for the replay chain, with a
   legitimate press inserted as the control case, conducted coupling, and a pass
-  criterion observable on both the actuator and the diagnostic trace.
+  criterion observable on the actuator, with the BCM diagnostic trace recorded as
+  supporting evidence.
 - OPEN-POINTS.md: what is not done and why, plus findings examined and rejected.
 
 ### Changed
