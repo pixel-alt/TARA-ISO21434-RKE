@@ -2,7 +2,7 @@
 
 **Scope:** cybersecurity goals and requirements derived from `02_tara.csv`
 **Status:** fictional case study – generic passenger vehicle, no real OEM
-**Coverage:** TS-01 is treated by *Reduce* with two goals — CSG-01 (counter freshness, bounds the replay in time) and CSG-04 (command binding, closes the lock→unlock variant) — plus a documented residual (RES-01). The key-management family TS-03..TS-06 is treated by *Reduce* with CSG-02 (authorization) and CSG-03 (accountability). The physical-access family TS-07, TS-08, TS-09 is treated by *Reduce* with CSG-05 (protect the debug interfaces). TS-02 is treated by *Accept* and recorded under "Risk acceptance" (ACC-01). The remaining lines (TS-10, TS-11, TS-12) get their treatment in a later version (see `OPEN-POINTS.md`).
+**Coverage:** TS-01 is treated by *Reduce* with two goals — CSG-01 (counter freshness) and CSG-04 (command binding) — plus a documented residual (RES-01). The key-management family TS-03..TS-06 is treated by *Reduce* with CSG-02 (authorization) and CSG-03 (accountability). The physical-access family TS-07..TS-11 is treated by *Reduce* with CSG-05 (protect the debug interfaces), TS-11 jointly with CSG-06 (secure boot). TS-12 (Key ID tracking, High) is treated by *Reduce* with CSG-07 (non-correlatable identifier). TS-02 is treated by *Accept* and recorded under "Risk acceptance" (ACC-01). All 12 threat scenarios are now rated and treated.
 
 A cybersecurity **goal** states *what* must be prevented (the effect), not *how*. The **concept** names the control and where it sits. The **requirements** (CSR) make the concept testable, allocated to system (SYS), software (SW) and hardware (HW).
 
@@ -111,13 +111,13 @@ Require a successful **Security Access** (UDS service 0x27) / authenticated-diag
 
 ## CSG-05 — Protect the debug interfaces
 
-**Source risk:** TS-07 (fob secret read via I-06a), TS-08 (all BCM secrets read via I-06b), TS-09 (a BCM key record overwritten via I-06b) — risk Low each — treatment = Reduce. CSG-05 will also cover the debug-access threats TS-10 and TS-11 once they are rated.
+**Source risk:** TS-07 (fob secret read via I-06a), TS-08 (all BCM secrets read via I-06b), TS-09 (a BCM key record overwritten via I-06b), TS-10 (rolling-code counter rolled back via I-06b) and TS-11 (firmware flashed via I-06b, jointly with CSG-06) — risk Low each — treatment = Reduce.
 
 **Goal:** The debug interface shall not allow a secret to be read from, or the non-volatile memory to be written to, on the key fob (I-06a) or the BCM (I-06b).
 
-**Initial state vs goal.** A-07 (BCM) and A-12 (fob) state that the debug paths are open — that is the item as currently defined, and it is what makes TS-07..TS-09 feasible. This goal introduces a control the item does not provide: it closes those paths. This is the same assumption-vs-requirement pattern as A-10 / CSG-04.
+**Initial state vs goal.** A-07 (BCM) and A-12 (fob) state that the debug paths are open — that is the item as currently defined, and it is what makes TS-07..TS-11 feasible on this path. This goal introduces a control the item does not provide: it closes those paths. This is the same assumption-vs-requirement pattern as A-10 / CSG-04.
 
-**Rationale.** These three lines are Major × Low = Low: invasive physical access, one device at a time, no fleet-wide master key (`01` §1). On their own risk value alone a retention would be defensible. They are reduced for a different reason — a **dependency**: closing the debug path is a precondition of CSG-02 (`02_tara-method.md` §9). If the debug stays open, the Security Access secret is read out (TS-08 applied to that secret) and CSG-02 falls. The same hardware control therefore protects the authorization secret and reduces the physical-access family — the `02_tara-method.md` §5 rule that a measure can be justified by a dependency rather than by its own risk value. The control is **hardware**: the debug bypasses the BCM software, so software cannot block it.
+**Rationale.** These lines are Major × Low = Low: invasive physical access, one device at a time, no fleet-wide master key (`01` §1). On their own risk value alone a retention would be defensible. They are reduced for a different reason — a **dependency**: closing the debug path is a precondition of CSG-02 (`02_tara-method.md` §9). If the debug stays open, the Security Access secret is read out (TS-08 applied to that secret) and CSG-02 falls. The same hardware control therefore protects the authorization secret and reduces the physical-access family — the `02_tara-method.md` §5 rule that a measure can be justified by a dependency rather than by its own risk value. The control is **hardware**: the debug bypasses the BCM software, so software cannot block it. TS-11 (firmware flash) is reduced here on the injection path and additionally by CSG-06 on the execution path.
 
 ### Requirements
 
@@ -127,7 +127,43 @@ Require a successful **Security Access** (UDS service 0x27) / authenticated-diag
 
 **Discharges:** the debug-path dependency on CSR-HW-02 (Security Access secret) — once CSG-05 is implemented, the "depends on A-07" caveat is satisfied by construction.
 
-**Traceability:** TS-07, TS-08, TS-09 → CSG-05 → {CSR-HW-05} → verification. Carried in `04_traceability-matrix.csv`.
+**Traceability:** TS-07, TS-08, TS-09, TS-10, TS-11 → CSG-05 → {CSR-HW-05} → verification. Carried in `04_traceability-matrix.csv`.
+
+## CSG-06 — Firmware authenticity (secure boot)
+
+**Source risk:** TS-11 (firmware flashed via the BCM debug interface) — risk Low — treatment = Reduce, jointly with CSG-05. **Discharges A-11.**
+
+**Goal:** The BCM shall execute only firmware whose authenticity and integrity have been verified.
+
+**Initial state vs goal.** A-11 states that no firmware authenticity protection is present — that is the item as analysed. This goal introduces the control that removes A-11, the same assumption-vs-requirement pattern as A-07 / CSG-05 and A-10 / CSG-04.
+
+**Rationale.** TS-11 does not trick the RKE logic, it **replaces** it: a backdoored firmware voids CSG-01, CSG-02, CSG-03 and CSG-04 at once (`02_tara-method.md` §9). The firmware cannot protect itself, so the control sits **below** it, on two complementary layers: CSG-05 (debug-lock) closes the injection path I-06b, and CSG-06 (secure boot) rejects a modified firmware **whatever the installation path**. Secure boot = a cryptographic signature of the firmware, verified at start-up by an immutable boot stage anchored in a hardware root of trust.
+
+### Requirements
+
+| req_id | Level | Requirement | Verification |
+|---|---|---|---|
+| CSR-SW-06 | Software | At start-up, the boot stage shall verify the cryptographic signature of the BCM firmware before executing it, and refuse to run firmware whose signature is invalid or absent. | Test (boot an unsigned firmware, verify refusal) |
+| CSR-HW-06 | Hardware | The signature-verification public key (root of trust) and the boot verifier shall reside in immutable storage (ROM / locked region / secure element), not in rewritable Flash, so they cannot be replaced together with the firmware. | Review + test |
+
+**Traceability:** TS-11 → CSG-06 → {CSR-SW-06, CSR-HW-06} → verification (TS-11 also → CSG-05). Carried in `04_traceability-matrix.csv`.
+
+## CSG-07 — Non-correlatable identifier (rolling identifier)
+
+**Source risk:** TS-12 (Key ID eavesdropping / owner tracking) — risk **High** — treatment = Reduce. Treats DS-03; mandated by GDPR art. 25 (`01` §6).
+
+**Goal:** The RKE system shall not expose on I-01 a stable identifier that lets an observer correlate a fob's transmissions over time.
+
+**Rationale.** TS-12 is the second **High** line of the study (Major × High), so it cannot be accepted like the Low debug lines. The Key ID is sent in clear and stable (A-06), so a passive observer links each transmission to the owner. A rotating / pseudonymous identifier makes successive frames unlinkable; the BCM resolves the emitting key by trying its stored secrets (one verification per stored key per frame), which is feasible given the small number of paired keys. It **reuses the rolling-code mechanism already present, so no new hardware** — which is precisely what supports the art. 25 argument: the countermeasure is technically available at reasonable cost, so its absence is not defensible.
+
+### Requirements
+
+| req_id | Level | Requirement | Verification |
+|---|---|---|---|
+| CSR-SYS-07 | System | No stable identifier correlatable across transmissions shall be observable on the radio link (I-01). | Test (capture successive frames, verify the observable identifier differs) |
+| CSR-SW-07 | Software | The BCM shall identify the emitting key by trial over its stored secrets (one verification per stored key per frame) rather than by reading a clear-text identifier. | Test / review |
+
+**Traceability:** TS-12 → CSG-07 → {CSR-SYS-07, CSR-SW-07} → verification. Carried in `04_traceability-matrix.csv`.
 
 ## Risk acceptance (Retain)
 
